@@ -24,3 +24,6 @@ jobs:
     - name: Unit Tests
       run:
         pytest tests
+    - name: Coverage Report
+      run:
+        pytest --cov=./

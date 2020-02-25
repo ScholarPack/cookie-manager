@@ -11,6 +11,7 @@ freezegun = "*"
 
 [dev-packages]
 pytest = "*"
+pytest-cov = "*"
 black = "*"
 mock = "*"
 
