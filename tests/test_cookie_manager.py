@@ -135,3 +135,25 @@ class TestCookieManager:
 
         with pytest.raises(BadRequest):
             cookie_manager._ratify_config(override_config=bad_override_config)
+
+    @pytest.mark.parametrize(
+        "input_,expected_output",
+        [
+            (
+                '{"A": "B", "key_id": "test_key_id"}.XepkCA.CUZtVTCXHbqoalWVCh5xOa4S4WE',
+                "test_key_id",
+            ),
+            ('{"A": "B"}.XepkCA.CUZtVTCXHbqoalWVCh5xOa4S4WE', None),
+        ],
+    )
+    def test_extract_key_id_positive(self, input_, expected_output):
+        result = CookieManager()._extract_key_id(signed_cookie=input_)
+        assert result == expected_output
+
+    @pytest.mark.parametrize(
+        "input_,error",
+        [("RANDOM_BLAH", Unauthorized), ("RANDOM_BLAH}", Unauthorized),],
+    )
+    def test_extract_key_id_negative(self, input_, error):
+        with pytest.raises(error):
+            CookieManager()._extract_key_id(signed_cookie=input_)

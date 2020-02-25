@@ -1,4 +1,5 @@
 import json
+import re
 
 from itsdangerous import TimestampSigner, BadSignature, SignatureExpired
 from werkzeug.exceptions import Unauthorized, ServiceUnavailable, BadRequest
@@ -64,7 +65,7 @@ class CookieManager:
         self._logger.info(f"Starting to verify cookie: {cookie}")
 
         if cookie is None:
-            self._logger.error(f"Incoming cookie '{cookie}' not provided.")
+            self._logger.warning(f"Incoming cookie '{cookie}' not provided.")
             raise Unauthorized
         try:
             self._logger.debug(f"Beginning verification: {cookie}")
@@ -72,12 +73,12 @@ class CookieManager:
                 value=cookie, max_age=self._config.get("VERIFY_MAX_COOKIE_AGE", 50)
             )
         except BadSignature as e:
-            self._logger.error(
+            self._logger.warning(
                 f"Incoming cookie payload: '{cookie}' failed validation: {e}"
             )
             raise Unauthorized
         except SignatureExpired as e:
-            self._logger.error(
+            self._logger.warning(
                 f"Incoming cookie payload '{cookie}' no longer valid (too old/time mismatch): {e}"
             )
             raise Unauthorized
@@ -125,3 +126,36 @@ class CookieManager:
 
         self._logger.info(f"Finished signing cookie: {cookie}")
         return result
+
+    def _extract_key_id(self, signed_cookie: str) -> [str, None]:
+        """
+        Extract the ``key_id`` from a signed and unverified cookie
+        This is used to choose a key to verify this cookie, so it's not trusted at this stage
+        :param signed_cookie: Signed cookie string
+        :return: ``key_id``, used later on to choose a key
+        """
+        self._logger.info(f"Starting to extract key_id from {signed_cookie}")
+        untrusted_payload_re = re.search(r"(.*\}+).*", signed_cookie)
+
+        try:
+            untrusted_payload = untrusted_payload_re.group(1)
+        except AttributeError:
+            self._logger.error(f"Untrusted cookie in wrong format: {signed_cookie}")
+            raise Unauthorized
+
+        try:
+            untrusted_object = json.loads(untrusted_payload)
+        except ValueError:
+            self._logger.error(
+                f"Unable to decode untrusted cookie to json: {signed_cookie}"
+            )
+            raise Unauthorized
+
+        try:
+            key_id = untrusted_object["key_id"]
+        except KeyError:
+            self._logger.warning(f"No key_id provided by cookie: {untrusted_payload}")
+            key_id = None
+
+        self._logger.info(f"Finished extracting key_id from {signed_cookie}")
+        return key_id
