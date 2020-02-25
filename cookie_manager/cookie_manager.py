@@ -21,18 +21,37 @@ class CookieManager:
 
     # TODO finish type decorating these
     def __init__(self, config: dict = None, logger=None) -> None:
-        # TODO pull out and unit test this ratification/whitelist logic
+        self._logger.info(f"Configuring cookie manager")
         if config:
-            for key, value in config.items():
-                try:
-                    # Only override existing values
-                    self._config[key]
-                except KeyError:
-                    raise BadRequest
-                self._config[key] = value
-
+            self._config = self._ratify_config(override_config=config)
         if logger:
             self._logger = logger
+        self._logger.info(f"Finished configuring cookie manager")
+
+    def _ratify_config(self, override_config: dict) -> dict:
+        """
+        Takes a config dict ``override_config`` and overrides any default values found in ``self._config``
+        Will error out if a config element does not exist in the parent dict
+        :param override_config: Dict of config options
+        :return: copy of ``self._config`` dict with values updated by those supplied in ``override_config``
+        """
+        self._logger.info(f"Starting to compare config: {override_config}")
+        new_config: dict = self._config
+
+        if override_config:
+            self._logger.debug("Override config provided")
+            for key, value in override_config.items():
+                self._logger.debug(f"Comparing config entry: {key} - {value}")
+                try:
+                    # Only override existing values
+                    new_config[key]
+                except KeyError:
+                    self._logger.error(f"Refusing to override config: {key} - {value}")
+                    raise BadRequest
+                new_config[key] = value
+
+        self._logger.info(f"Finished comparing config: {override_config}")
+        return new_config
 
     def decode_cookie(self, cookie: str, verify_key: str) -> [None, dict]:
         """
@@ -43,12 +62,13 @@ class CookieManager:
         :param verify_key: Str used to verify original signer of cookie
         :return: Verified cookie dict payload, None,
         """
-        self._logger.info(f"Starting to decode cookie: {cookie}")
+        self._logger.info(f"Starting to verify cookie: {cookie}")
 
         if cookie is None:
             self._logger.error(f"Incoming cookie '{cookie}' not provided.")
             raise Unauthorized
         try:
+            self._logger.debug(f"Beginning verification: {cookie}")
             cookie_value_json = TimestampSigner(verify_key).unsign(
                 value=cookie, max_age=self._config.get("VERIFY_MAX_COOKIE_AGE", 50)
             )
@@ -66,14 +86,16 @@ class CookieManager:
             self._logger.error(f"Incoming cookie object: '{cookie}' problem: {e}")
             raise ServiceUnavailable
 
+        self._logger.info(f"Finished verifying cookie: {cookie}")
+        self._logger.info(f"Beginning to json decode: {cookie_value_json}")
         self._logger.debug(
-            f"Incoming cookie object before decoding: {cookie_value_json}"
+            f"Incoming cookie object before decoding json: {cookie_value_json}"
         )
         try:
             cookie_payload = json.loads(cookie_value_json)
         except ValueError:
             self._logger.warning(
-                f"Could not decode incoming cookie: {cookie_value_json}"
+                f"Could not decode incoming verified cookie: {cookie_value_json}"
             )
             cookie_payload = None
 
@@ -87,6 +109,7 @@ class CookieManager:
         :param signing_key: key to sign data with
         :return: str signed cookie payload
         """
+        self._logger.info(f"Starting to sign cookie: {cookie}")
         encoded_payload = json.dumps(cookie)
 
         try:
@@ -101,4 +124,5 @@ class CookieManager:
             )
             raise ServiceUnavailable
 
+        self._logger.info(f"Finished signing cookie: {cookie}")
         return result
