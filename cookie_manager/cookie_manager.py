@@ -19,7 +19,6 @@ class CookieManager:
         },
     )
 
-    # TODO finish type decorating these
     def __init__(self, config: dict = None, logger=None) -> None:
         self._logger.info(f"Configuring cookie manager")
         if config:
