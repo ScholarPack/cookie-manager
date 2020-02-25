@@ -1,91 +1,88 @@
 import json
 
 from itsdangerous import TimestampSigner, BadSignature, SignatureExpired
-from werkzeug.exceptions import abort
+from werkzeug.exceptions import Unauthorized, ServiceUnavailable, BadRequest
 
 
 class CookieManager:
-    config: dict = {
+    _config: dict = {
         "VERIFY_MAX_COOKIE_AGE": 50,  # Cookie TTL in seconds (enforced when verifying, not when signing)
     }
-    logger = type(
+    _logger = type(
         "logger",
         (),
         {
-            "error": lambda msg: None,
-            "warning": lambda msg: None,
-            "debug": lambda msg: None,
+            "error": lambda msg: print(msg),
+            "warning": lambda msg: print(msg),
+            "debug": lambda msg: print(msg),
+            "info": lambda msg: print(msg),
         },
-    )
-    failure_func = (
-        abort  # Function to call when there is an error. Called with a HTTP status code
     )
 
     # TODO finish type decorating these
-    def __init__(self, config: dict = None, logger=None, failure_func=None) -> None:
+    def __init__(self, config: dict = None, logger=None) -> None:
         # TODO pull out and unit test this ratification/whitelist logic
         if config:
             for key, value in config.items():
                 try:
                     # Only override existing values
-                    self.config[key]
+                    self._config[key]
                 except KeyError:
-                    self.failure_func(400)
-                self.config[key] = value
+                    raise BadRequest
+                self._config[key] = value
 
         if logger:
-            self.logger = logger
-
-        if failure_func:
-            self.failure_func = failure_func
+            self._logger = logger
 
     def decode_cookie(self, cookie: str, verify_key: str) -> [None, dict]:
         """
         Verify and decode a signed cookie payload from other internal services.
-        Will abort if unauthorised
+        Will trigger ``self.failure_func`` with a http status code upon error
+        Logs status to ``self.logger``
         :param cookie: Signed payload for one cookie
         :param verify_key: Str used to verify original signer of cookie
         :return: Verified cookie dict payload, None,
         """
-        cookie_value_json = None
+        self._logger.info(f"Starting to decode cookie: {cookie}")
 
         if cookie is None:
-            self.logger.error(f"Incoming cookie '{cookie}' not provided.")
-            self.failure_func(401)
+            self._logger.error(f"Incoming cookie '{cookie}' not provided.")
+            raise Unauthorized
         try:
             cookie_value_json = TimestampSigner(verify_key).unsign(
-                cookie, max_age=self.config.get("VERIFY_MAX_COOKIE_AGE", 50)
+                value=cookie, max_age=self._config.get("VERIFY_MAX_COOKIE_AGE", 50)
             )
         except BadSignature as e:
-            self.logger.error(
+            self._logger.error(
                 f"Incoming cookie payload: '{cookie}' failed validation: {e}"
             )
-            self.failure_func(401)
+            raise Unauthorized
         except SignatureExpired as e:
-            self.logger.error(
+            self._logger.error(
                 f"Incoming cookie payload '{cookie}' no longer valid (too old/time mismatch): {e}"
             )
-            self.failure_func(401)
+            raise Unauthorized
         except Exception as e:
-            self.logger.error(f"Incoming cookie object: '{cookie}' problem: {e}")
-            self.failure_func(503)
+            self._logger.error(f"Incoming cookie object: '{cookie}' problem: {e}")
+            raise ServiceUnavailable
 
-        self.logger.debug(
+        self._logger.debug(
             f"Incoming cookie object before decoding: {cookie_value_json}"
         )
         try:
             cookie_payload = json.loads(cookie_value_json)
         except ValueError:
-            self.logger.warning(
+            self._logger.warning(
                 f"Could not decode incoming cookie: {cookie_value_json}"
             )
             cookie_payload = None
 
+        self._logger.info(f"Finished decoding cookie: {cookie_payload}")
         return cookie_payload
 
     def sign_cookie(self, cookie: dict, signing_key: str) -> str:
         """
-        Sign and encode a cookie ready for transport and secure comms with services
+        Sign and encode a cookie ready for transport and secure comms with trusted services
         :param cookie: dict of data to sign
         :param signing_key: key to sign data with
         :return: str signed cookie payload
@@ -99,9 +96,9 @@ class CookieManager:
                 .decode("utf8")
             )
         except Exception as e:
-            self.logger.error(
+            self._logger.error(
                 f"Unexpected problem signing cookie payload: {cookie}: {e}"
             )
-            raise
+            raise ServiceUnavailable
 
         return result
