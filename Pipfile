@@ -4,8 +4,6 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-requests = "*"
-werkzeug = "*"
 itsdangerous = "*"
 
 [dev-packages]
@@ -17,6 +15,7 @@ setuptools = "*"
 wheel = "*"
 twine = "*"
 freezegun = "*"
+werkzeug = "*"
 
 [requires]
 python_version = "3.7"
