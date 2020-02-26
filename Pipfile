@@ -7,13 +7,16 @@ name = "pypi"
 requests = "*"
 werkzeug = "*"
 itsdangerous = "*"
-freezegun = "*"
 
 [dev-packages]
 pytest = "*"
 pytest-cov = "*"
 black = "*"
 mock = "*"
+setuptools = "*"
+wheel = "*"
+twine = "*"
+freezegun = "*"
 
 [requires]
 python_version = "3.7"
