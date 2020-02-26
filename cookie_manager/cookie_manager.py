@@ -19,13 +19,38 @@ class CookieManager:
             "info": lambda msg: print(msg),
         },
     )
+    _keys = {}  # Signing/verification keys in the format {"key_id": "key")
 
-    def __init__(self, config: dict = None, logger=None) -> None:
+    def __init__(self, keys: dict, config: dict = None, logger=None) -> None:
         if config:
             self._config = self._override_config(override_config=config)
         if logger:
             self._logger = logger
+
+        if keys is None:
+            self._logger.critical(f"Signing/verification keys not supplied.")
+            raise ServiceUnavailable
+
+        self._keys = keys
         self._logger.info(f"Finished configuring cookie manager")
+
+    def sign(self, cookie: dict, key_id: str) -> str:
+        """
+        Sign and encode a cookie ready for transport and secure comms with trusted services
+        Use a pre-registered signing key, looked up through ``key`` and ``self._keys``
+        :param cookie: Cookie dict to sign, e.g. {"A": "A"}
+        :param key_id: Id of signing key registered in ``self._keys``
+        :return: Signed cookie string, e.g. {"A": "A"}.ABCD.12345678
+        """
+        self._logger.info(f"Starting to sign cookie: {cookie} with key_id: {key_id}")
+        try:
+            signing_key = self._keys[key_id]
+        except KeyError:
+            self._logger.error(f"Bad lookup for signing key_id: {key_id}")
+            raise ServiceUnavailable
+
+        signed_cookie = self._sign_cookie(cookie=cookie, signing_key=signing_key)
+        return signed_cookie
 
     def _override_config(self, override_config: dict) -> dict:
         """
@@ -52,7 +77,7 @@ class CookieManager:
         self._logger.info(f"Finished comparing config: {override_config}")
         return new_config
 
-    def decode_cookie(self, cookie: str, verify_key: str) -> [None, dict]:
+    def _decode_verify_cookie(self, cookie: str, verify_key: str) -> [None, dict]:
         """
         Verify and decode a signed cookie payload from other internal services.
         Will trigger ``self.failure_func`` with a http status code upon error
@@ -98,9 +123,10 @@ class CookieManager:
         self._logger.info(f"Finished decoding cookie: {cookie_payload}")
         return cookie_payload
 
-    def sign_cookie(self, cookie: dict, signing_key: str) -> str:
+    def _sign_cookie(self, cookie: dict, signing_key: str) -> str:
         """
         Sign and encode a cookie ready for transport and secure comms with trusted services
+        Use ``self.sign_cookie`` for public use
         :param cookie: dict of data to sign
         :param signing_key: key to sign data with
         :return: str signed cookie payload
