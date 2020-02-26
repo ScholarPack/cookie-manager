@@ -8,3 +8,12 @@ Wraps https://github.com/pallets/itsdangerous for the signing and verification (
 Specifically, this handles:
 - Managing multiple different cookies - one for every environment
 - Error correction around sign/verify commands
+
+# Installing
+Install and update using `pip`:
+
+```pip install -U Cookie-Manager```
+
+# Links
+* Releases: https://pypi.org/project/cookie-manager/
+* Code: https://github.com/ScholarPack/cookie-manager
