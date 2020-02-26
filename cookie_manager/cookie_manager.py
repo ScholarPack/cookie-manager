@@ -2,7 +2,6 @@ import json
 import re
 
 from itsdangerous import TimestampSigner, BadSignature, SignatureExpired
-from werkzeug.exceptions import Unauthorized, ServiceUnavailable, BadRequest
 
 
 class CookieManager:
@@ -19,9 +18,20 @@ class CookieManager:
             "info": lambda msg: print(msg),
         },
     )
+    _exceptions = type(
+        "exception",
+        (),
+        {
+            "Unauthorized": Exception,
+            "ServiceUnavailable": Exception,
+            "BadRequest": Exception,
+        },
+    )
     _keys = {}  # Signing/verification keys in the format {"key_id": "key")
 
-    def __init__(self, keys: dict, config: dict = None, logger=None) -> None:
+    def __init__(
+        self, keys: dict, config: dict = None, logger=None, exceptions=None
+    ) -> None:
         if config:
             self._config = self._override_config(override_config=config)
         if logger:
@@ -29,7 +39,10 @@ class CookieManager:
 
         if keys is None:
             self._logger.critical(f"Signing/verification keys not supplied.")
-            raise ServiceUnavailable
+            raise self._exceptions.ServiceUnavailable
+
+        if exceptions:
+            self._exceptions = exceptions
 
         self._keys = keys
         self._logger.info(f"Finished configuring cookie manager")
@@ -47,7 +60,7 @@ class CookieManager:
             signing_key = self._keys[key_id]
         except KeyError:
             self._logger.error(f"Bad lookup for signing key_id: {key_id}")
-            raise ServiceUnavailable
+            raise self._exceptions.ServiceUnavailable
 
         signed_cookie = self._sign_cookie(cookie=cookie, signing_key=signing_key)
         return signed_cookie
@@ -80,7 +93,7 @@ class CookieManager:
                     new_config[key]
                 except KeyError:
                     self._logger.error(f"Refusing to override config: {key} - {value}")
-                    raise BadRequest
+                    raise self._exceptions.BadRequest
                 new_config[key] = value
 
         self._logger.info(f"Finished comparing config: {override_config}")
@@ -99,7 +112,7 @@ class CookieManager:
 
         if cookie is None:
             self._logger.warning(f"Incoming cookie '{cookie}' not provided.")
-            raise Unauthorized
+            raise self._exceptions.Unauthorized
         try:
             self._logger.debug(f"Beginning verification: {cookie}")
             cookie_value = TimestampSigner(verify_key).unsign(
@@ -109,15 +122,15 @@ class CookieManager:
             self._logger.warning(
                 f"Incoming cookie payload: '{cookie}' failed validation: {e}"
             )
-            raise Unauthorized
+            raise self._exceptions.Unauthorized
         except SignatureExpired as e:
             self._logger.warning(
                 f"Incoming cookie payload '{cookie}' no longer valid (too old/time mismatch): {e}"
             )
-            raise Unauthorized
+            raise self._exceptions.Unauthorized
         except Exception as e:
             self._logger.error(f"Incoming cookie object: '{cookie}' problem: {e}")
-            raise ServiceUnavailable
+            raise self._exceptions.ServiceUnavailable
 
         self._logger.info(f"Finished verifying cookie: {cookie}")
         self._logger.info(f"Beginning to json decode: {cookie_value}")
@@ -153,7 +166,7 @@ class CookieManager:
             self._logger.error(
                 f"Unexpected problem signing cookie payload: {cookie}: {e}"
             )
-            raise ServiceUnavailable
+            raise self._exceptions.ServiceUnavailable
 
         self._logger.info(f"Finished signing cookie: {cookie}")
         return result
@@ -172,7 +185,7 @@ class CookieManager:
             untrusted_payload = untrusted_payload_re.group(1)
         except AttributeError:
             self._logger.error(f"Untrusted cookie in wrong format: {signed_cookie}")
-            raise Unauthorized
+            raise self._exceptions.Unauthorized
 
         try:
             untrusted_object = json.loads(untrusted_payload)
@@ -180,7 +193,7 @@ class CookieManager:
             self._logger.error(
                 f"Unable to decode untrusted cookie to json: {signed_cookie}"
             )
-            raise Unauthorized
+            raise self._exceptions.Unauthorized
 
         try:
             key_id = untrusted_object["key_id"]
