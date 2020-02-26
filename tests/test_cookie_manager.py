@@ -122,19 +122,19 @@ class TestCookieManager:
             ({}, {"A": "A", "B": "B", "C": "C"}),
         ],
     )
-    def test_ratify_config_positive(self, input_, expected_output):
+    def test_override_config_positive(self, input_, expected_output):
         cookie_manager = CookieManager()
         cookie_manager._config = {"A": "A", "B": "B", "C": "C"}
-        result = cookie_manager._ratify_config(override_config=input_)
+        result = cookie_manager._override_config(override_config=input_)
         assert result == expected_output
 
-    def test_ratify_config_negative(self):
+    def test_override_config_negative(self):
         cookie_manager = CookieManager()
         cookie_manager._config = {"A": "A", "B": "B", "C": "C"}
         bad_override_config = {"D": "D"}
 
         with pytest.raises(BadRequest):
-            cookie_manager._ratify_config(override_config=bad_override_config)
+            cookie_manager._override_config(override_config=bad_override_config)
 
     @pytest.mark.parametrize(
         "input_,expected_output",

@@ -21,14 +21,13 @@ class CookieManager:
     )
 
     def __init__(self, config: dict = None, logger=None) -> None:
-        self._logger.info(f"Configuring cookie manager")
         if config:
-            self._config = self._ratify_config(override_config=config)
+            self._config = self._override_config(override_config=config)
         if logger:
             self._logger = logger
         self._logger.info(f"Finished configuring cookie manager")
 
-    def _ratify_config(self, override_config: dict) -> dict:
+    def _override_config(self, override_config: dict) -> dict:
         """
         Takes a config dict ``override_config`` and overrides any default values found in ``self._config``
         Will error out if a config element does not exist in the parent dict
