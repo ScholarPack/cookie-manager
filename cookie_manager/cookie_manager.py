@@ -52,6 +52,15 @@ class CookieManager:
         signed_cookie = self._sign_cookie(cookie=cookie, signing_key=signing_key)
         return signed_cookie
 
+    def verify(self, signed_cookie: str) -> dict:
+        """
+        Takes a signed cookie, extracts the ``key_id`` embedded in it, and verifies then decodes the cookie
+        :param signed_cookie: Signed cookie payload, containing a ``key_id`` that matches a key in ``self._keys``
+        :return: Unsigned, trusted cookie as an object
+        """
+        key = self._extract_key_id(signed_cookie=signed_cookie)
+        return self._decode_verify_cookie(cookie=signed_cookie, verify_key=key)
+
     def _override_config(self, override_config: dict) -> dict:
         """
         Takes a config dict ``override_config`` and overrides any default values found in ``self._config``
