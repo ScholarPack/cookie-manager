@@ -68,7 +68,7 @@ class CookieManager:
             raise Unauthorized
         try:
             self._logger.debug(f"Beginning verification: {cookie}")
-            cookie_value_json = TimestampSigner(verify_key).unsign(
+            cookie_value = TimestampSigner(verify_key).unsign(
                 value=cookie, max_age=self._config.get("VERIFY_MAX_COOKIE_AGE", 50)
             )
         except BadSignature as e:
@@ -86,15 +86,12 @@ class CookieManager:
             raise ServiceUnavailable
 
         self._logger.info(f"Finished verifying cookie: {cookie}")
-        self._logger.info(f"Beginning to json decode: {cookie_value_json}")
-        self._logger.debug(
-            f"Incoming cookie object before decoding json: {cookie_value_json}"
-        )
+        self._logger.info(f"Beginning to json decode: {cookie_value}")
         try:
-            cookie_payload = json.loads(cookie_value_json)
+            cookie_payload = json.loads(cookie_value)
         except ValueError:
             self._logger.warning(
-                f"Could not decode incoming verified cookie: {cookie_value_json}"
+                f"Could not decode incoming verified cookie: {cookie_value}"
             )
             cookie_payload = None
 
