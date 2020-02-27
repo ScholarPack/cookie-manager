@@ -74,7 +74,8 @@ class CookieManager:
         :param signed_cookie: Signed cookie payload, containing a ``key_id`` that matches a key in ``self._keys``
         :return: Unsigned, trusted cookie as an object
         """
-        key = self._extract_key_id(signed_cookie=signed_cookie)
+        key_id = self._extract_key_id(signed_cookie=signed_cookie)
+        key = self._keys[key_id]
         return self._decode_verify_cookie(cookie=signed_cookie, verify_key=key)
 
     def _override_config(self, override_config: dict) -> dict:
