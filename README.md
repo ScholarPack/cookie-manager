@@ -6,7 +6,7 @@ Signs, verifies, and manages multiple cookies from trusted environments. Designe
 Wraps [itsdangerous](https://github.com/pallets/itsdangerous) for the signing and verification (but this could change in the future). 
 
 Specifically, this handles:
-- Managing multiple different cookies - one for every environment
+- Managing multiple different cookies - one for every environment or paired service
 - Error correction around sign/verify commands
 
 This package is designed to sign and verify cookies - either ingoing or outgoing. These cookies are not encrypted, 
@@ -49,7 +49,8 @@ payload = {"key": "value"}
 ```
 
 Then sign the payload, making sure to pass a valid `key_id` as previously configured. The `sign` method will
-retrieve your signing key `SECRET` to sign requests (based on the `key_id` you pass in).
+retrieve your signing key `SECRET` to sign requests (based on the `key_id` you pass in). This WILL override any
+existing key with the name `key_id`.
 
 ```python
 signed_cookie = cookie_manager.sign(cookie=payload, key_id="key1")
@@ -82,7 +83,7 @@ Now, you can access data inside the `payload` object. The `verify` function will
 # Custom Logging
 This package uses dependency injection to log errors with Python's `print`. To use your own logger, pass in a
 logger object which implements `critical`, `error`, `warning`, `debug`, and `info` functions. Here's how to patch
-in the the Flask logger, but any object will work providing it meets the Duck Typing rules:
+in the Flask logger, but any object will work providing it meets the Duck Typing rules:
 
 ```python
 cookie_manager = CookieManager(keys=keys, logger=app.logger)
@@ -91,7 +92,7 @@ cookie_manager = CookieManager(keys=keys, logger=app.logger)
 This will result in logging calls firing to `app.logger.<logger-level>` with a string passed in.
 
 # Custom Exceptions
-Like logging, this package uses custom error handling if you need it. Be default, all errors will raise as
+Like logging, this package uses custom error handling if you need it. By default, all errors will raise as
 "Exception", but you can pass in a custom object to raise specific errors.
 
 This class will raise `Unauthorized`, `ServiceUnavailable`, and `BadRequest`.
@@ -100,11 +101,11 @@ Here's how to pass in a [Werkzeug](https://github.com/pallets/werkzeug) exceptio
 
 ```python
 from werkzeug import exceptions
-cookie_manager = CookieManager(keys=keys, exceptions=werkzeug.exceptions)
+cookie_manager = CookieManager(keys=keys, exceptions=exceptions)
 ```
 
 # Developing
-\*\*\* Pipelines require your tests to pass and code to be formatted \*\*\*
+__The build pipeline require your tests to pass and code to be formatted__
 
 Make sure you have Python 3.x installed on your machine (use [pyenv](https://github.com/pyenv/pyenv)).
 
@@ -165,4 +166,4 @@ python3 -m twine upload --repository-url https://upload.pypi.org/legacy/ dist/*
 
 # Links
 * Releases: https://pypi.org/project/cookie-manager/
-* Code: https://github.com/ScholarPack/cookie-manager
+* Code: https://github.com/ScholarPack/cookie-manager/
