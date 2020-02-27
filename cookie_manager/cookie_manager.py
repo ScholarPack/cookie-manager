@@ -12,6 +12,7 @@ class CookieManager:
         "logger",
         (),
         {
+            "critical": lambda msg: print(msg),
             "error": lambda msg: print(msg),
             "warning": lambda msg: print(msg),
             "debug": lambda msg: print(msg),
@@ -51,6 +52,7 @@ class CookieManager:
         """
         Sign and encode a cookie ready for transport and secure comms with trusted services
         Use a pre-registered signing key, looked up through ``key`` and ``self._keys``
+        Will add ``key_id`` to the cookie payload (used to verify)
         :param cookie: Cookie dict to sign, e.g. {"A": "A"}
         :param key_id: Id of signing key registered in ``self._keys``
         :return: Signed cookie string, e.g. {"A": "A"}.ABCD.12345678
@@ -62,6 +64,7 @@ class CookieManager:
             self._logger.error(f"Bad lookup for signing key_id: {key_id}")
             raise self._exceptions.ServiceUnavailable
 
+        cookie["key_id"] = key_id
         signed_cookie = self._sign_cookie(cookie=cookie, signing_key=signing_key)
         return signed_cookie
 

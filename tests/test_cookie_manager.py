@@ -169,7 +169,7 @@ class TestCookieManager:
 
         assert (
             signed_cookie
-            == f"{json.dumps(cookie_value)}.XepkCA.CUZtVTCXHbqoalWVCh5xOa4S4WE"
+            == f"{json.dumps(cookie_value)}.XepkCA.S6GGQPTUJw4MWDLvvyZhwcMZ1W8"
         )
 
     @freeze_time("2019-12-06 14:22:00")
