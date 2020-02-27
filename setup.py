@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="cookie-manager",
-    version="0.1.0",
+    version="1.0.0",
     author="ScholarPack",
     author_email="dev@scholarpack.com",
     description="Signed cookie manager for communication between multiple trusted services.",
