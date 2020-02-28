@@ -15,6 +15,18 @@ class TestCookieManager:
         self.cookie_manager = CookieManager(keys={"A": "A"}, exceptions=exceptions)
 
     @freeze_time("2019-12-06")
+    def test_verify_positive(self):
+        cookie_value = json.dumps({"A": "B", "key_id": "A"})
+
+        signed_cookie = (
+            TimestampSigner(secret_key="A").sign(cookie_value).decode("utf8")
+        )
+
+        unsigned_cookie = self.cookie_manager.verify(signed_cookie=signed_cookie)
+
+        assert unsigned_cookie == json.loads(cookie_value)
+
+    @freeze_time("2019-12-06")
     def test_decode_verify_positive(self):
         cookie_value = json.dumps({"A": "B"})
 
