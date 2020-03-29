@@ -35,9 +35,7 @@ class TestCookieManager:
         )
 
         with pytest.raises(exceptions.ServiceUnavailable):
-            self.cookie_manager.verify(
-                signed_cookie=signed_cookie
-            )
+            self.cookie_manager.verify(signed_cookie=signed_cookie)
 
     @freeze_time("2019-12-06")
     def test_decode_verify_positive(self):
