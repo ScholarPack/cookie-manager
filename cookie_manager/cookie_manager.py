@@ -75,7 +75,12 @@ class CookieManager:
         :return: Unsigned, trusted cookie as an object
         """
         key_id = self._extract_key_id(signed_cookie=signed_cookie)
-        key = self._keys[key_id]
+        try:
+            key = self._keys[key_id]
+        except KeyError:
+            self._logger.error(f"Bad lookup for verifying key_id: {key_id}")
+            raise self._exceptions.ServiceUnavailable
+
         return self._decode_verify_cookie(cookie=signed_cookie, verify_key=key)
 
     def _override_config(self, override_config: dict) -> dict:
