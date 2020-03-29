@@ -35,7 +35,7 @@ class TestCookieManager:
         )
 
         with pytest.raises(exceptions.ServiceUnavailable):
-            unsigned_cookie = self.cookie_manager.verify(
+            self.cookie_manager.verify(
                 signed_cookie=signed_cookie
             )
 
