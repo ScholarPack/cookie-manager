@@ -27,6 +27,19 @@ class TestCookieManager:
         assert unsigned_cookie == json.loads(cookie_value)
 
     @freeze_time("2019-12-06")
+    def test_verify_nonexistent_keyid(self):
+        cookie_value = json.dumps({"A": "B", "key_id": "C"})
+
+        signed_cookie = (
+            TimestampSigner(secret_key="A").sign(cookie_value).decode("utf8")
+        )
+
+        with pytest.raises(exceptions.ServiceUnavailable):
+            unsigned_cookie = self.cookie_manager.verify(
+                signed_cookie=signed_cookie
+            )
+
+    @freeze_time("2019-12-06")
     def test_decode_verify_positive(self):
         cookie_value = json.dumps({"A": "B"})
 
