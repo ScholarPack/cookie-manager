@@ -12,7 +12,17 @@ class TestCookieManager:
     cookie_manager = None
 
     def setup_method(self):
-        self.cookie_manager = CookieManager(keys={"A": "A"}, exceptions=exceptions)
+        self.cookie_manager = CookieManager(keys={"A": "A"}, exceptions=exceptions, disable_log=True)
+
+    @freeze_time("2019-12-06")
+    def test_disable_log(self, caplog):
+        cookie_value = {"A": "B"}
+
+        self.cookie_manager._sign_cookie(
+            cookie=cookie_value, signing_key="A"
+        )
+
+        assert caplog.text==""
 
     @freeze_time("2019-12-06")
     def test_verify_positive(self):

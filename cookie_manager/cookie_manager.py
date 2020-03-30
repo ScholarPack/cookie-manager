@@ -1,10 +1,14 @@
 import json
 import re
+import logging
 
 from itsdangerous import TimestampSigner, BadSignature, SignatureExpired
 
 
 class CookieManager:
+    formatter = '%(levelname)s : %(message)s'
+    logging.basicConfig(level=logging.DEBUG, format=formatter)
+
     _config: dict = {
         "VERIFY_MAX_COOKIE_AGE": 50,  # Cookie TTL in seconds (enforced when verifying, not when signing)
     }
@@ -12,11 +16,11 @@ class CookieManager:
         "logger",
         (),
         {
-            "critical": lambda msg: print(msg),
-            "error": lambda msg: print(msg),
-            "warning": lambda msg: print(msg),
-            "debug": lambda msg: print(msg),
-            "info": lambda msg: print(msg),
+            "critical": lambda msg: logging.critical(msg),
+            "error": lambda msg: logging.error(msg),
+            "warning": lambda msg: logging.warning(msg),
+            "debug": lambda msg: logging.debug(msg),
+            "info": lambda msg: logging.info(msg),
         },
     )
     _exceptions = type(
@@ -31,7 +35,7 @@ class CookieManager:
     _keys = {}  # Signing/verification keys in the format {"key_id": "key")
 
     def __init__(
-        self, keys: dict, config: dict = None, logger=None, exceptions=None
+        self, keys: dict, config: dict = None, logger=None, exceptions=None, disable_log=False
     ) -> None:
         if config:
             self._config = self._override_config(override_config=config)
@@ -44,6 +48,9 @@ class CookieManager:
 
         if exceptions:
             self._exceptions = exceptions
+
+        if disable_log:
+            logging.disable(logging.FATAL)
 
         self._keys = keys
         self._logger.info(f"Finished configuring cookie manager")
