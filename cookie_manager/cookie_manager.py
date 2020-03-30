@@ -6,7 +6,7 @@ from itsdangerous import TimestampSigner, BadSignature, SignatureExpired
 
 
 class CookieManager:
-    formatter = '%(levelname)s : %(message)s'
+    formatter = "%(levelname)s : %(message)s"
     logging.basicConfig(level=logging.DEBUG, format=formatter)
 
     _config: dict = {
@@ -35,7 +35,12 @@ class CookieManager:
     _keys = {}  # Signing/verification keys in the format {"key_id": "key")
 
     def __init__(
-        self, keys: dict, config: dict = None, logger=None, exceptions=None, disable_log=False
+        self,
+        keys: dict,
+        config: dict = None,
+        logger=None,
+        exceptions=None,
+        disable_log=False,
     ) -> None:
         if config:
             self._config = self._override_config(override_config=config)
