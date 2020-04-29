@@ -1,3 +1,5 @@
+![Validate Build](https://github.com/ScholarPack/cookie-manager/workflows/Validate%20Build/badge.svg?branch=master)
+
 # Cookie-Manager
 Signed cookie manager for communication between multiple trusted services.
 
