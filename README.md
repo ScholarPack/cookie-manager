@@ -82,6 +82,16 @@ payload = cookie_manager.verify(signed_cookie=signed_cookie)
 
 Now, you can access data inside the `payload` object. The `verify` function will raise errors if it cannot verify.
 
+## Configuration
+
+You can pass an optional config dictionary into the constructor to override existing options.
+
+```python
+cookie_manager = CookieManager(keys=keys, config={"VERIFY_MAX_COOKIE_AGE": 10})
+```
+
+This example will override the max age of a cookie that is allowed, when verifying.
+
 # Custom Logging
 This package uses dependency injection to log errors with Python's `print`. To use your own logger, pass in a
 logger object which implements `critical`, `error`, `warning`, `debug`, and `info` functions. Here's how to patch
