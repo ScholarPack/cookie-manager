@@ -116,6 +116,61 @@ from werkzeug import exceptions
 cookie_manager = CookieManager(keys=keys, exceptions=exceptions)
 ```
 
+# Security Decorators
+If using this package in *flask*, you can decorate routes to only allow access to certain cookies.
+
+There are 2 ways of protecting a route, allow any signed cookie or allow cookies signed with specific keys.
+
+To make use of the decorators, you will need to create a cookie manager that has all the keys you want to use for
+protecting routes and create an instance of the `CookieSecurityDecorator`.
+
+*Decorator instance (e.g. util.py)*
+```python
+from cookie_manager import CookieSecurityDecorator
+cookie_security = CookieSecurityDecorator()
+```
+
+```python
+from cookie_manager import CookieManager
+from project.util import cookie_security
+from flask import request
+cookie_manager = CookieManager(
+    keys={"key_1": "", "key_2": "", "key_3": ""}, # These are the keys that will be used to protect all routes
+    exceptions=exceptions,
+)
+cookie_security.init_app(request=request, cookie_manager=cookie_manager, cookie_name="cookie_name")
+```
+
+The string supplied for `cookie_name` is the name of the cookie in the request to use for protecting the routes.
+
+Now you are able to use the decorator as detailed below.
+
+**Option 1** - Allow access to any signed cookie
+
+Lets say we want to have a route that can be accessed by any cookie that has been signed using one of the keys
+supplied to the cookie manager used to create the decorator. If we decorate the route like the following example,
+only signed cookies will be allowed to access this route.
+
+```python
+from project.util import cookie_security
+@cookie_security.keys_required()
+def my_route():
+    #...
+```
+
+**Option 2** - Allow access to specific signed cookies
+
+Lets say we want to have a route that can only be accessed by a cookie that has been signed using a subset of keys supplied to
+the cookie manager used to create the decorator. If we decorate the route like the following example, only cookies signed with
+a provided key will be allowed to access this route.
+
+```python
+from project.util import cookie_security
+@cookie_security.keys_required(["key_1", "key_2"])
+def my_route():
+    #...
+```
+
 # Developing
 __The build pipeline require your tests to pass and code to be formatted__
 

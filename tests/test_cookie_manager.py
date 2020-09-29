@@ -55,12 +55,17 @@ class TestCookieManager:
     def test_decode_verify_empty_cookie(self):
         with pytest.raises(exceptions.Unauthorized):
             self.cookie_manager._decode_verify_cookie(
-                cookie="", verify_key="test_key",
+                cookie="",
+                verify_key="test_key",
             )
 
     @freeze_time("2019-12-06")
     def test_decode_verify_bad_signature(self):
-        cookie_value = json.dumps({"A": "B",})
+        cookie_value = json.dumps(
+            {
+                "A": "B",
+            }
+        )
 
         signed_cookie = (
             TimestampSigner(secret_key="test_key").sign(cookie_value).decode("utf8")
@@ -98,7 +103,8 @@ class TestCookieManager:
 
         with pytest.raises(exceptions.HTTPException):
             self.cookie_manager._decode_verify_cookie(
-                cookie=signed_cookie, verify_key="test_key",
+                cookie=signed_cookie,
+                verify_key="test_key",
             )
 
     @freeze_time("2019-12-06")
@@ -113,7 +119,8 @@ class TestCookieManager:
         )
 
         result = self.cookie_manager._decode_verify_cookie(
-            cookie=signed_cookie, verify_key="test_key",
+            cookie=signed_cookie,
+            verify_key="test_key",
         )
 
         assert result is None

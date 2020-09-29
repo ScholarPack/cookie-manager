@@ -29,9 +29,14 @@ class CookieManager:
         },
     )
     _keys = {}  # Signing/verification keys in the format {"key_id": "key")
+    cookie_name = None
 
     def __init__(
-        self, keys: dict, config: dict = None, logger=None, exceptions=None
+        self,
+        keys: dict,
+        config: dict = None,
+        logger=None,
+        exceptions=None,
     ) -> None:
         if config:
             self._config = self._override_config(override_config=config)
