@@ -16,6 +16,8 @@ wheel = "*"
 twine = "*"
 freezegun = "*"
 werkzeug = "*"
+bandit = "*"
+dataclasses = "*"
 
 [pipenv]
 allow_prereleases = true
