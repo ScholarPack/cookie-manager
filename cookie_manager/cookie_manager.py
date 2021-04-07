@@ -130,7 +130,7 @@ class CookieManager:
         try:
             self._logger.debug(f"Beginning verification: {cookie}")
             cookie_value = TimestampSigner(verify_key).unsign(
-                value=cookie, max_age=self._config.get("VERIFY_MAX_COOKIE_AGE", 50)
+                cookie, max_age=self._config.get("VERIFY_MAX_COOKIE_AGE", 50)
             )
         except BadSignature as e:
             self._logger.warning(
